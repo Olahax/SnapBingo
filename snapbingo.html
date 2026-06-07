@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SnapBingo</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0a0a;--s1:#141414;--s2:#1c1c1c;
+  --border:#2a2a2a;--accent:#b8f566;--accent2:#d4ff8a;
+  --text:#f0f0f0;--muted:#777;--dim:#444;--red:#ff5a5a;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;min-height:100vh;overflow-x:hidden;}
+
+nav{display:flex;align-items:center;justify-content:space-between;padding:1.1rem 2rem;border-bottom:1px solid var(--border);position:sticky;top:0;background:rgba(10,10,10,0.93);backdrop-filter:blur(16px);z-index:200;}
+.logo{font-size:1.15rem;font-weight:800;letter-spacing:-0.04em;display:flex;align-items:center;gap:7px;}
+.logo-mark{width:30px;height:30px;background:var(--accent);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:15px;}
+.logo-bingo{color:var(--accent);}
+.pill{font-family:'DM Mono',monospace;font-size:10px;background:rgba(184,245,102,0.1);color:var(--accent);border:1px solid rgba(184,245,102,0.25);padding:4px 10px;border-radius:20px;}
+
+.hero{max-width:700px;margin:0 auto;padding:4rem 2rem 2.5rem;text-align:center;}
+.tag{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:var(--accent);margin-bottom:1.1rem;display:flex;align-items:center;justify-content:center;gap:8px;}
+.tag::before,.tag::after{content:'';width:32px;height:1px;background:rgba(184,245,102,0.35);}
+h1{font-size:clamp(2.2rem,5.5vw,3.8rem);font-weight:800;line-height:1.02;letter-spacing:-0.05em;margin-bottom:1rem;}
+h1 .green{color:var(--accent);}
+h1 .outline{-webkit-text-stroke:1px rgba(240,240,240,0.3);color:transparent;}
+.sub{color:var(--muted);font-size:.9rem;line-height:1.65;max-width:420px;margin:0 auto 2rem;}
+.how{display:flex;justify-content:center;gap:0;margin-bottom:2.5rem;flex-wrap:wrap;}
+.how-step{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted);}
+.how-step strong{color:var(--text);font-size:12px;}
+.how-num{width:22px;height:22px;border-radius:50%;border:1px solid var(--dim);color:var(--muted);font-family:'DM Mono',monospace;font-size:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.how-arrow{margin:0 12px;color:var(--dim);}
+
+.wrap{padding:0 2rem;max-width:700px;margin:0 auto;}
+.panel{background:var(--s1);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:1.25rem;}
+.panel-head{padding:.9rem 1.4rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+.panel-icon{width:28px;height:28px;background:rgba(184,245,102,0.1);border:1px solid rgba(184,245,102,0.2);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}
+.panel-title{font-size:.85rem;font-weight:700;}
+.panel-sub{font-size:10px;color:var(--muted);margin-top:1px;}
+.panel-body{padding:1.4rem;}
+
+.drop-zone{border:1.5px dashed var(--border);border-radius:10px;padding:1.75rem 1.5rem;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;position:relative;}
+.drop-zone:hover,.drop-zone.drag{border-color:var(--accent);background:rgba(184,245,102,0.03);}
+.drop-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.drop-icon{font-size:1.8rem;margin-bottom:.5rem;opacity:.6;}
+.drop-text strong{color:var(--text);display:block;font-size:.9rem;margin-bottom:2px;}
+.drop-text{font-size:.8rem;color:var(--muted);line-height:1.5;}
+.drop-hint{font-family:'DM Mono',monospace;font-size:10px;color:var(--dim);margin-top:.5rem;}
+.thumbs{display:flex;flex-wrap:wrap;gap:7px;margin-top:.9rem;}
+.thumb{position:relative;width:68px;height:68px;border-radius:7px;overflow:hidden;border:1px solid var(--border);}
+.thumb img{width:100%;height:100%;object-fit:cover;}
+.thumb-del{position:absolute;top:2px;right:2px;width:16px;height:16px;background:rgba(0,0,0,.75);border:none;border-radius:50%;color:#fff;font-size:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.thumb-del:hover{background:var(--red);}
+
+.extract-btn{width:100%;padding:12px;margin-top:1.1rem;background:var(--accent);color:#0a0a0a;font-family:'Syne',sans-serif;font-weight:800;font-size:14px;border:none;border-radius:9px;cursor:pointer;transition:background .15s,opacity .15s;display:flex;align-items:center;justify-content:center;gap:7px;}
+.extract-btn:hover:not(:disabled){background:var(--accent2);}
+.extract-btn:disabled{opacity:.35;cursor:not-allowed;}
+
+.song-list{display:flex;flex-direction:column;gap:3px;max-height:260px;overflow-y:auto;padding-right:4px;}
+.song-list::-webkit-scrollbar{width:3px;}
+.song-list::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+.song-item{display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:7px;background:var(--s2);}
+.song-num{font-family:'DM Mono',monospace;font-size:9px;color:var(--dim);width:16px;flex-shrink:0;text-align:right;}
+.song-info{flex:1;min-width:0;}
+.song-name{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.song-artist{font-size:10px;color:var(--muted);}
+.song-del{background:none;border:none;color:var(--dim);font-size:13px;cursor:pointer;padding:2px 4px;border-radius:4px;flex-shrink:0;}
+.song-del:hover{color:var(--red);}
+.song-stats{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;}
+.song-count{font-family:'DM Mono',monospace;font-size:11px;color:var(--accent);}
+.add-btn{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);background:none;border:1px solid var(--border);border-radius:5px;padding:3px 9px;cursor:pointer;}
+.add-btn:hover{border-color:var(--accent);color:var(--accent);}
+
+/* THEMES */
+.theme-label{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);display:block;margin-bottom:8px;}
+.theme-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:1.2rem;}
+.theme-btn{border:1.5px solid var(--border);border-radius:9px;padding:9px 6px 8px;background:var(--s2);cursor:pointer;text-align:center;transition:border-color .15s,background .15s;font-family:'Syne',sans-serif;}
+.theme-btn:hover{border-color:rgba(255,255,255,.25);}
+.theme-btn.active{border-color:var(--accent);background:rgba(184,245,102,.07);}
+.theme-emoji{font-size:1.3rem;display:block;margin-bottom:3px;line-height:1;}
+.theme-name{font-size:10px;font-weight:700;color:var(--text);}
+
+.opts{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:9px;margin-bottom:1.1rem;}
+.opt label{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);display:block;margin-bottom:4px;}
+input[type=number],select{width:100%;background:var(--s2);border:1px solid var(--border);border-radius:7px;padding:9px 11px;color:var(--text);font-family:'Syne',sans-serif;font-size:13px;outline:none;-webkit-appearance:none;transition:border-color .2s;}
+input[type=number]:focus,select:focus{border-color:var(--accent);}
+
+.gen-btn{width:100%;padding:13px;background:var(--accent);color:#0a0a0a;font-family:'Syne',sans-serif;font-weight:800;font-size:14px;border:none;border-radius:9px;cursor:pointer;transition:background .15s,opacity .15s;}
+.gen-btn:hover:not(:disabled){background:var(--accent2);}
+.gen-btn:disabled{opacity:.35;cursor:not-allowed;}
+
+.msg{font-family:'DM Mono',monospace;font-size:10px;padding:7px 11px;border-radius:7px;margin-top:9px;display:none;line-height:1.5;}
+.msg.show{display:block;}
+.msg.err{color:var(--red);background:rgba(255,90,90,.07);border:1px solid rgba(255,90,90,.2);}
+.msg.ok{color:var(--accent);background:rgba(184,245,102,.07);border:1px solid rgba(184,245,102,.2);}
+.msg.info{color:var(--muted);background:var(--s2);border:1px solid var(--border);}
+
+.progress-wrap{margin-top:9px;display:none;}
+.progress-wrap.show{display:block;}
+.progress-bar{height:3px;background:var(--border);border-radius:2px;overflow:hidden;}
+.progress-fill{height:100%;background:var(--accent);border-radius:2px;width:0%;transition:width .3s;}
+.progress-label{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-top:4px;}
+
+/* OUTPUT PREVIEW */
+#output{max-width:980px;margin:0 auto;padding:0 2rem 5rem;display:none;}
+.out-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.4rem;flex-wrap:wrap;gap:10px;}
+.out-title{font-size:.95rem;font-weight:700;}
+.out-acts{display:flex;gap:8px;}
+.btn-ghost{background:transparent;border:1px solid var(--border);border-radius:7px;padding:7px 13px;color:var(--muted);font-family:'Syne',sans-serif;font-weight:600;font-size:12px;cursor:pointer;transition:border-color .2s,color .2s;}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent);}
+.btn-dl{background:var(--accent);color:#0a0a0a;border:none;border-radius:7px;padding:9px 20px;font-family:'Syne',sans-serif;font-weight:800;font-size:13px;cursor:pointer;transition:background .15s;display:flex;align-items:center;gap:6px;text-decoration:none;}
+.btn-dl:hover{background:var(--accent2);}
+
+.cards-grid-preview{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1.2rem;}
+
+/* CARD PREVIEW (screen) */
+.bingo-card{border-radius:12px;overflow:hidden;box-shadow:0 2px 16px rgba(0,0,0,.3);}
+.card-stripe{height:5px;}
+.card-head{padding:9px 13px;display:flex;align-items:center;justify-content:space-between;}
+.card-num{font-family:'DM Mono',monospace;font-size:9px;color:rgba(255,255,255,.4);}
+.card-letters{display:flex;gap:2px;}
+.card-letters span{width:20px;height:20px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:.62rem;font-weight:800;}
+.bingo-grid-inner{display:grid;gap:2px;padding:7px;}
+.bingo-cell{border-radius:5px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:3px 2px;font-weight:600;line-height:1.2;aspect-ratio:1;cursor:default;}
+.c-song{display:block;}.c-artist{display:block;font-weight:400;}
+
+.spin{display:inline-block;width:12px;height:12px;border:2px solid rgba(0,0,0,.15);border-top-color:#0a0a0a;border-radius:50%;animation:rot .55s linear infinite;flex-shrink:0;}
+@keyframes rot{to{transform:rotate(360deg)}}
+
+.deco{position:fixed;pointer-events:none;opacity:.06;bottom:-80px;right:-80px;width:280px;height:280px;border-radius:50%;border:28px solid #fff;background:repeating-conic-gradient(#1a1a1a 0deg 2deg,#111 2deg 4deg);}
+.deco::after{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:56px;height:56px;background:var(--bg);border-radius:50%;}
+
+/* download tip box */
+.dl-tip{background:rgba(184,245,102,.07);border:1px solid rgba(184,245,102,.2);border-radius:10px;padding:12px 16px;margin-bottom:1.4rem;display:flex;align-items:flex-start;gap:10px;}
+.dl-tip-icon{font-size:1.2rem;flex-shrink:0;margin-top:1px;}
+.dl-tip-text{font-size:12px;color:var(--muted);line-height:1.6;}
+.dl-tip-text strong{color:var(--accent);display:block;font-size:13px;margin-bottom:2px;}
+
+@media(max-width:600px){
+  nav{padding:1rem 1.25rem;}
+  .hero{padding:2.5rem 1.25rem 1.5rem;}
+  .wrap,#output{padding:0 1.25rem;}
+  .opts{grid-template-columns:1fr 1fr;}
+  .theme-grid{grid-template-columns:repeat(4,1fr);}
+  .cards-grid-preview{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+<div class="deco"></div>
+
+<nav>
+  <div class="logo">
+    <div class="logo-mark">🎵</div>
+    <span>Snap</span><span class="logo-bingo">Bingo</span>
+  </div>
+  <div class="pill">no account needed</div>
+</nav>
+
+<div class="hero">
+  <div class="tag">screenshot → bingo card</div>
+  <h1>Turn your <span class="green">Spotify</span><br>into <span class="outline">Bingo</span></h1>
+  <p class="sub">Screenshot your playlist, upload the images — AI reads the songs and creates ready-to-print bingo cards.</p>
+  <div class="how">
+    <div class="how-step"><div class="how-num">1</div><div><strong>Screenshot</strong> playlist</div></div>
+    <div class="how-arrow">→</div>
+    <div class="how-step"><div class="how-num">2</div><div><strong>Upload</strong> images</div></div>
+    <div class="how-arrow">→</div>
+    <div class="how-step"><div class="how-num">3</div><div><strong>Download</strong> &amp; print</div></div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <div class="panel">
+    <div class="panel-head">
+      <div class="panel-icon">📸</div>
+      <div><div class="panel-title">Upload playlist screenshots</div><div class="panel-sub">Multiple screenshots? Upload them all — AI reads every one</div></div>
+    </div>
+    <div class="panel-body">
+      <div class="drop-zone" id="dropZone">
+        <input type="file" id="fileInput" accept="image/*" multiple>
+        <div class="drop-icon">📷</div>
+        <div class="drop-text"><strong>Click to select images</strong>or drag and drop here</div>
+        <div class="drop-hint">JPG · PNG · WEBP</div>
+      </div>
+      <div class="thumbs" id="thumbs"></div>
+      <button class="extract-btn" id="extractBtn" onclick="extractSongs()" disabled>Read songs from images</button>
+      <div class="progress-wrap" id="progressWrap">
+        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+        <div class="progress-label" id="progressLabel"></div>
+      </div>
+      <div class="msg" id="extractMsg"></div>
+    </div>
+  </div>
+
+  <div class="panel" id="songsPanel" style="display:none;">
+    <div class="panel-head">
+      <div class="panel-icon">🎵</div>
+      <div><div class="panel-title">Found songs</div><div class="panel-sub">Edit or delete before generating</div></div>
+    </div>
+    <div class="panel-body">
+      <div class="song-stats">
+        <div class="song-count" id="songCount">0 songs</div>
+        <button class="add-btn" onclick="addSong()">+ Add song</button>
+      </div>
+      <div class="song-list" id="songList"></div>
+      <div class="msg" id="songsMsg"></div>
+    </div>
+  </div>
+
+  <div class="panel" id="optsPanel" style="display:none;">
+    <div class="panel-head">
+      <div class="panel-icon">⚙️</div>
+      <div><div class="panel-title">Card settings</div><div class="panel-sub">Choose a theme and customise your cards</div></div>
+    </div>
+    <div class="panel-body">
+      <span class="theme-label">// theme</span>
+      <div class="theme-grid" id="themeGrid"></div>
+      <div class="opts">
+        <div class="opt"><label>Columns</label><input type="number" id="cols" value="5" min="3" max="10"></div>
+        <div class="opt"><label>Rows</label><input type="number" id="rows" value="5" min="3" max="10"></div>
+        <div class="opt"><label>No. of cards</label><input type="number" id="cardCount" value="6" min="1" max="30"></div>
+        <div class="opt"><label>Free space</label>
+          <select id="freeSpace"><option value="yes">Yes — centre</option><option value="no">No</option></select>
+        </div>
+      </div>
+      <button class="gen-btn" id="genBtn" onclick="generateCards()" disabled>Generate bingo cards</button>
+      <div class="msg" id="genMsg"></div>
+    </div>
+  </div>
+</div>
+
+<div id="output">
+  <div class="out-bar" style="max-width:980px;margin:0 auto;padding:0 2rem;">
+    <div class="out-title" id="outTitle"></div>
+    <div class="out-acts">
+      <button class="btn-ghost" onclick="generateCards()">↺ Regenerate</button>
+      <a class="btn-dl" id="dlBtn" download="snapbingo-cards.html">⬇ Download &amp; Print</a>
+    </div>
+  </div>
+  <div style="max-width:980px;margin:0 auto;padding:0 2rem;">
+    <div class="dl-tip">
+      <div class="dl-tip-icon">💡</div>
+      <div class="dl-tip-text">
+        <strong>How to print</strong>
+        Click "Download &amp; Print" → open the downloaded file in your browser → press Ctrl+P (or Cmd+P on Mac) → Print. Cards are laid out 2-per-row on A4.
+      </div>
+    </div>
+    <div class="cards-grid-preview" id="cardsGrid"></div>
+  </div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+let images=[], songs=[], selectedTheme='classic';
+
+/* ── THEMES ──────────────────────────────────────────────────── */
+const THEMES={
+  classic:{
+    name:'Classic',emoji:'🎵',
+    stripe:'linear-gradient(90deg,#b8f566,#00d4ff,#ff6ec7,#ffd93d)',
+    head:'linear-gradient(90deg,#1a1a2e,#16213e)',
+    gridBg:'#f0f0f0',cardBg:'#ffffff',
+    cellBg:'#ffffff',cellBorder:'#e0e0e0',cellColor:'#1a1a1a',
+    freeBg:'linear-gradient(135deg,#e8ffd0,#d0f0ff)',freeBorder:'#88cc44',freeColor:'#2a6e00',
+    artistColor:'#888',
+    lc:[{bg:'#e8ffd0',c:'#2a6e00'},{bg:'#d0f0ff',c:'#0060a0'},{bg:'#ffe0f5',c:'#a0006a'},{bg:'#fff3cc',c:'#7a5500'},{bg:'#ffd8d8',c:'#900020'}]
+  },
+  christmas:{
+    name:'Christmas',emoji:'🎄',
+    stripe:'linear-gradient(90deg,#c41e3a,#2e8b57,#ffd700,#2e8b57,#c41e3a)',
+    head:'linear-gradient(90deg,#0d2e0d,#1a4a1a)',
+    gridBg:'#f5ece8',cardBg:'#fffdf8',
+    cellBg:'#fffdf8',cellBorder:'#e8d5c4',cellColor:'#2a1a0a',
+    freeBg:'linear-gradient(135deg,#ffe8e8,#e8ffe8)',freeBorder:'#c41e3a',freeColor:'#8b0000',
+    artistColor:'#996633',
+    lc:[{bg:'#ffe8e8',c:'#8b0000'},{bg:'#e8ffe8',c:'#1a5c1a'},{bg:'#fff8cc',c:'#7a5500'},{bg:'#ffe8e8',c:'#8b0000'},{bg:'#e8ffe8',c:'#1a5c1a'}]
+  },
+  birthday:{
+    name:'Birthday',emoji:'🎂',
+    stripe:'linear-gradient(90deg,#ff6ec7,#ffd93d,#b8f566,#00d4ff,#ff6ec7)',
+    head:'linear-gradient(90deg,#3a0a3a,#1a0a3a)',
+    gridBg:'#fdf0ff',cardBg:'#fffaff',
+    cellBg:'#fffaff',cellBorder:'#f0d0f5',cellColor:'#2a002a',
+    freeBg:'linear-gradient(135deg,#ffe0f8,#fff0cc)',freeBorder:'#e040a0',freeColor:'#800060',
+    artistColor:'#a060a0',
+    lc:[{bg:'#ffe0f8',c:'#800060'},{bg:'#fff0cc',c:'#7a5500'},{bg:'#e0f8ff',c:'#006080'},{bg:'#e8ffe0',c:'#1a6000'},{bg:'#ffe0e0',c:'#800000'}]
+  },
+  newyear:{
+    name:"New Year's",emoji:'🥂',
+    stripe:'linear-gradient(90deg,#ffd700,#fff,#ffd700,#c0c0c0,#ffd700)',
+    head:'linear-gradient(90deg,#08081a,#12120a)',
+    gridBg:'#0d0d1a',cardBg:'#12121f',
+    cellBg:'#1a1a2e',cellBorder:'#2a2a4a',cellColor:'#e8e8ff',
+    freeBg:'linear-gradient(135deg,rgba(255,215,0,.25),rgba(192,192,192,.2))',freeBorder:'#ffd700',freeColor:'#ffd700',
+    artistColor:'#8888bb',
+    lc:[{bg:'rgba(255,215,0,.25)',c:'#ffd700'},{bg:'rgba(192,192,192,.2)',c:'#c0c0c0'},{bg:'rgba(255,255,255,.1)',c:'#e0e0ff'},{bg:'rgba(255,215,0,.2)',c:'#ffd700'},{bg:'rgba(192,192,192,.15)',c:'#c0c0c0'}]
+  },
+  love:{
+    name:'Love',emoji:'💕',
+    stripe:'linear-gradient(90deg,#ff4081,#ff80ab,#ffb3cc,#ff4081)',
+    head:'linear-gradient(90deg,#3a0a18,#1a0a10)',
+    gridBg:'#fff0f5',cardBg:'#fffafc',
+    cellBg:'#fffafc',cellBorder:'#ffd0e0',cellColor:'#2a001a',
+    freeBg:'linear-gradient(135deg,#ffe0ec,#fff0f8)',freeBorder:'#ff4081',freeColor:'#c00050',
+    artistColor:'#cc7090',
+    lc:[{bg:'#ffe0ec',c:'#c00050'},{bg:'#ffccdd',c:'#900040'},{bg:'#ffd0e8',c:'#a00048'},{bg:'#ffe8f0',c:'#b00055'},{bg:'#ffc0d8',c:'#800038'}]
+  },
+  midsummer:{
+    name:'Midsummer',emoji:'🔥',
+    stripe:'linear-gradient(90deg,#ff8c00,#ffd700,#ff6347,#ffe066,#ff8c00)',
+    head:'linear-gradient(90deg,#1a0a00,#2a1200)',
+    gridBg:'#fff8ec',cardBg:'#fffcf5',
+    cellBg:'#fffcf5',cellBorder:'#ffe0b0',cellColor:'#2a1000',
+    freeBg:'linear-gradient(135deg,#fff0cc,#ffe8a0)',freeBorder:'#ff8c00',freeColor:'#7a3a00',
+    artistColor:'#996633',
+    lc:[{bg:'#fff0cc',c:'#7a3a00'},{bg:'#ffe0b0',c:'#6a2800'},{bg:'#ffd080',c:'#5a2000'},{bg:'#ffec99',c:'#704000'},{bg:'#ffc060',c:'#602000'}]
+  },
+  halloween:{
+    name:'Halloween',emoji:'🎃',
+    stripe:'linear-gradient(90deg,#ff6600,#1a1a1a,#9b30ff,#1a1a1a,#ff6600)',
+    head:'linear-gradient(90deg,#0a0a0a,#180828)',
+    gridBg:'#0d0808',cardBg:'#120808',
+    cellBg:'#1a0f0f',cellBorder:'#3a1a1a',cellColor:'#f0d0a0',
+    freeBg:'linear-gradient(135deg,rgba(255,102,0,.3),rgba(155,48,255,.25))',freeBorder:'#ff6600',freeColor:'#ff8c00',
+    artistColor:'#886644',
+    lc:[{bg:'rgba(255,102,0,.25)',c:'#ff6600'},{bg:'rgba(155,48,255,.25)',c:'#9b30ff'},{bg:'rgba(255,102,0,.2)',c:'#ff8c00'},{bg:'rgba(155,48,255,.2)',c:'#b060ff'},{bg:'rgba(255,102,0,.15)',c:'#ffaa00'}]
+  },
+  summer:{
+    name:'Summer',emoji:'☀️',
+    stripe:'linear-gradient(90deg,#00bfff,#ffd700,#ff6347,#7fff00,#00bfff)',
+    head:'linear-gradient(90deg,#005070,#003050)',
+    gridBg:'#e8f8ff',cardBg:'#f0fbff',
+    cellBg:'#f0fbff',cellBorder:'#b0e0f8',cellColor:'#003050',
+    freeBg:'linear-gradient(135deg,#c0f0ff,#fffacc)',freeBorder:'#00bfff',freeColor:'#005080',
+    artistColor:'#4488aa',
+    lc:[{bg:'#c0f0ff',c:'#005080'},{bg:'#fff5cc',c:'#806000'},{bg:'#ffd0c0',c:'#803000'},{bg:'#c8ffcc',c:'#006020'},{bg:'#e0d0ff',c:'#400080'}]
+  }
+};
+
+/* build theme picker */
+const tg=$('themeGrid');
+Object.entries(THEMES).forEach(([key,t])=>{
+  const btn=document.createElement('button');
+  btn.className='theme-btn'+(key==='classic'?' active':'');
+  btn.dataset.key=key;
+  btn.innerHTML=`<span class="theme-emoji">${t.emoji}</span><span class="theme-name">${t.name}</span>`;
+  btn.onclick=()=>{
+    selectedTheme=key;
+    document.querySelectorAll('.theme-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+  };
+  tg.appendChild(btn);
+});
+
+/* ── FILES ───────────────────────────────────────────────────── */
+const dz=$('dropZone');
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag');});
+dz.addEventListener('dragleave',()=>dz.classList.remove('drag'));
+dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('drag');handleFiles(e.dataTransfer.files);});
+$('fileInput').addEventListener('change',e=>{handleFiles(e.target.files);$('fileInput').value='';});
+
+function handleFiles(files){
+  [...files].forEach(f=>{
+    if(!f.type.startsWith('image/'))return;
+    const r=new FileReader();r.onload=ev=>{images.push({dataUrl:ev.target.result});renderThumbs();};r.readAsDataURL(f);
+  });
+}
+function renderThumbs(){
+  $('thumbs').innerHTML='';
+  images.forEach((img,i)=>{
+    const d=document.createElement('div');d.className='thumb';
+    d.innerHTML=`<img src="${img.dataUrl}"><button class="thumb-del" onclick="removeImg(${i})">✕</button>`;
+    $('thumbs').appendChild(d);
+  });
+  $('extractBtn').disabled=images.length===0;
+}
+function removeImg(i){images.splice(i,1);renderThumbs();}
+
+/* ── EXTRACT ─────────────────────────────────────────────────── */
+async function extractSongs(){
+  showMsg('extractMsg','');setProgress(0,'Preparing...',true);
+  $('extractBtn').disabled=true;$('extractBtn').innerHTML='<span class="spin"></span>Analysing...';
+  try{
+    const content=images.map(img=>{
+      const[,mt,,b64]=img.dataUrl.match(/data:([^;]+)(;base64,)(.+)/);
+      return{type:'image',source:{type:'base64',media_type:mt,data:b64}};
+    });
+    content.push({type:'text',text:`These are screenshots of a Spotify playlist. Extract ALL visible song titles and artist names.
+Return ONLY a valid JSON array, nothing else, no markdown:
+[{"song":"Song Title","artist":"Artist Name"},...]
+Include every visible song. Remove exact duplicates. If artist unclear write "Unknown".`});
+    setProgress(35,'Sending to AI...');
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:4000,messages:[{role:'user',content}]})});
+    setProgress(80,'Processing...');
+    const data=await resp.json();
+    if(data.error)throw new Error(data.error.message);
+    const text=(data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
+    const match=text.match(/\[[\s\S]*?\]/);
+    if(!match)throw new Error('No songs found in images');
+    const parsed=JSON.parse(match[0]);
+    if(!parsed.length)throw new Error('Try clearer or larger screenshots');
+    const existing=new Set(songs.map(s=>s.song.toLowerCase().trim()));
+    const fresh=parsed.filter(s=>s.song&&!existing.has(s.song.toLowerCase().trim()));
+    songs=[...songs,...fresh];
+    setProgress(100,'Done!');setTimeout(()=>setProgress(0,'',false),800);
+    renderSongs();$('songsPanel').style.display='block';$('optsPanel').style.display='block';
+    const dupes=parsed.length-fresh.length;
+    showMsg('extractMsg',`✓ Found ${parsed.length} songs${dupes?` (${dupes} duplicates skipped)`:'`'}`, 'ok');
+    $('songsPanel').scrollIntoView({behavior:'smooth',block:'start'});
+  }catch(e){setProgress(0,'',false);showMsg('extractMsg','Error: '+e.message,'err');}
+  $('extractBtn').disabled=images.length===0;$('extractBtn').textContent='Read songs from images';
+}
+function setProgress(pct,label,show){
+  if(show!==undefined)$('progressWrap').classList.toggle('show',show);
+  $('progressFill').style.width=pct+'%';if(label)$('progressLabel').textContent=label;
+}
+
+/* ── SONGS ───────────────────────────────────────────────────── */
+function renderSongs(){
+  const list=$('songList');list.innerHTML='';
+  songs.forEach((s,i)=>{
+    const d=document.createElement('div');d.className='song-item';
+    d.innerHTML=`<span class="song-num">${i+1}</span>
+      <div class="song-info">
+        <div class="song-name" contenteditable="true" onblur="songs[${i}].song=this.textContent.trim()">${esc(s.song)}</div>
+        <div class="song-artist" contenteditable="true" onblur="songs[${i}].artist=this.textContent.trim()">${esc(s.artist)}</div>
+      </div>
+      <button class="song-del" onclick="removeSong(${i})">✕</button>`;
+    list.appendChild(d);
+  });
+  $('songCount').textContent=`${songs.length} songs`;updateGenBtn();
+}
+function removeSong(i){songs.splice(i,1);renderSongs();}
+function addSong(){
+  songs.push({song:'New song',artist:'Artist'});renderSongs();
+  setTimeout(()=>{const ns=$('songList').querySelectorAll('.song-name');if(ns.length){ns[ns.length-1].focus();document.execCommand('selectAll');}},50);
+}
+function updateGenBtn(){
+  const cols=parseInt($('cols').value)||5,rows=parseInt($('rows').value)||5;
+  const need=cols*rows-($('freeSpace').value==='yes'?1:0);
+  const ok=songs.length>=need;
+  $('genBtn').disabled=!ok;
+  if(songs.length>0&&!ok)showMsg('genMsg',`${songs.length} songs — need ${need-songs.length} more for ${cols}×${rows}`,'info');
+  else showMsg('genMsg','');
+}
+['cols','rows','freeSpace'].forEach(id=>$(id).addEventListener('change',updateGenBtn));
+
+/* ── GENERATE ────────────────────────────────────────────────── */
+function shuffle(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}return b;}
+
+/* Build a single card's HTML for both preview and print */
+function buildCardHTML(c, t, cols, rows, useFree, songs, cardIndex){
+  const needed=cols*rows-(useFree?1:0);
+  const cx=Math.floor(rows/2)*cols+Math.floor(cols/2);
+  const picked=shuffle(songs).slice(0,needed);
+  const cells=[...picked];
+  if(useFree)cells.splice(cx,0,null);
+  const allLetters='BINGOMUZIK'.split('');
+  const fs=Math.max(6,10-Math.floor(cols/2));
+  const as=Math.max(5,fs-1.5);
+  const hdr=allLetters.slice(0,cols).map((l,i)=>{
+    const lc=t.lc[i%t.lc.length];
+    return `<span style="width:20px;height:20px;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;font-size:.62rem;font-weight:800;background:${lc.bg};color:${lc.c}">${l}</span>`;
+  }).join('');
+  const cellsHTML=cells.map(item=>{
+    if(item===null){
+      return `<div style="border-radius:5px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:3px 2px;font-weight:600;line-height:1.2;aspect-ratio:1;font-size:${fs}px;background:${t.freeBg};border:1px solid ${t.freeBorder};color:${t.freeColor};font-family:'DM Mono',monospace;cursor:default;">
+        <span style="font-size:${fs+4}px">★</span><span style="font-size:${fs-1}px">FREE</span>
+      </div>`;
+    }
+    return `<div style="border-radius:5px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:3px 2px;font-weight:600;line-height:1.2;aspect-ratio:1;font-size:${fs}px;background:${t.cellBg};border:1px solid ${t.cellBorder};color:${t.cellColor};cursor:default;">
+      <span style="display:block">${esc(trunc(item.song,cols<=5?30:22))}</span>
+      <span style="display:block;font-weight:400;font-size:${as}px;color:${t.artistColor}">${esc(trunc(item.artist,cols<=5?24:18))}</span>
+    </div>`;
+  }).join('');
+  return `<div style="background:${t.cardBg};border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.15);page-break-inside:avoid;break-inside:avoid;">
+    <div style="height:5px;background:${t.stripe}"></div>
+    <div style="padding:9px 13px;display:flex;align-items:center;justify-content:space-between;background:${t.head}">
+      <span style="font-family:'DM Mono',monospace;font-size:9px;color:rgba(255,255,255,.45)">${t.emoji} card #${cardIndex+1}</span>
+      <span style="display:flex;gap:2px">${hdr}</span>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(${cols},1fr);gap:2px;padding:7px;background:${t.gridBg}">
+      ${cellsHTML}
+    </div>
+  </div>`;
+}
+
+function generateCards(){
+  const cols=clamp(parseInt($('cols').value)||5,3,10);
+  const rows=clamp(parseInt($('rows').value)||5,3,10);
+  const count=clamp(parseInt($('cardCount').value)||6,1,30);
+  const useFree=$('freeSpace').value==='yes';
+  const needed=cols*rows-(useFree?1:0);
+  if(songs.length<needed){showMsg('genMsg',`Not enough songs: ${songs.length}/${needed}`,'err');return;}
+  const t=THEMES[selectedTheme];
+  const grid=$('cardsGrid');grid.innerHTML='';
+  const allCardHTMLs=[];
+  for(let c=0;c<count;c++){
+    const html=buildCardHTML(c,t,cols,rows,useFree,songs,c);
+    allCardHTMLs.push(html);
+    const wrapper=document.createElement('div');wrapper.innerHTML=html;grid.appendChild(wrapper.firstChild);
+  }
+  $('outTitle').textContent=`${t.emoji} ${count} cards · ${cols}×${rows} · ${t.name}`;
+  $('output').style.display='block';
+  $('output').scrollIntoView({behavior:'smooth',block:'start'});
+  buildDownload(allCardHTMLs,t,cols,rows,count);
+}
+
+function buildDownload(cardHTMLs,t,cols,rows,count){
+  const printDoc=`<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>SnapBingo — ${t.name} Cards</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  body{background:#fff;font-family:'Syne',sans-serif;padding:8mm;}
+  h2{font-size:13px;margin-bottom:6mm;color:#555;font-family:'DM Mono',monospace;font-weight:400;}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:6mm;}
+  @page{size:A4 portrait;margin:8mm;}
+  @media print{
+    body{padding:0;}
+    .no-print{display:none;}
+    .grid{gap:5mm;}
+  }
+  .print-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:6mm;padding-bottom:5mm;border-bottom:1px solid #eee;}
+  .print-bar h1{font-size:16px;font-weight:800;letter-spacing:-0.03em;}
+  .print-bar h1 span{color:#5a9e20;}
+  button{font-family:'Syne',sans-serif;font-weight:700;font-size:13px;background:#b8f566;color:#0a0a0a;border:none;border-radius:7px;padding:8px 18px;cursor:pointer;}
+  button:hover{background:#ceff80;}
+</style>
+</head>
+<body>
+<div class="print-bar no-print">
+  <h1>Snap<span>Bingo</span> — ${t.emoji} ${t.name} · ${count} cards</h1>
+  <button onclick="window.print()">🖨 Print now</button>
+</div>
+<div class="grid">
+${cardHTMLs.join('\n')}
+</div>
+</body>
+</html>`;
+  const blob=new Blob([printDoc],{type:'text/html'});
+  const url=URL.createObjectURL(blob);
+  const dl=$('dlBtn');
+  dl.href=url;
+  dl.download=`snapbingo-${selectedTheme}-cards.html`;
+}
+
+/* ── UTILS ───────────────────────────────────────────────────── */
+function showMsg(id,msg,type){const el=$(id);el.textContent=msg;el.className='msg'+(msg?' show':'')+( type?' '+type:'');}
+function trunc(s,n){return s.length>n?s.slice(0,n-1)+'…':s;}
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function clamp(v,a,b){return Math.min(Math.max(v,a),b);}
+</script>
+</body>
+</html>
